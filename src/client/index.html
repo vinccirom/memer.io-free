@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <title>Memer.io - Solana Edition</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="img/memer-logo.png">
+    <link rel="shortcut icon" type="image/png" href="img/memer-logo.png">
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- CSS -->
@@ -12,6 +15,7 @@
     <!-- Audio -->
     <audio id="split_cell" src="audio/split.mp3"></audio>
     <audio id="spawn_cell" src="audio/spawn.mp3"></audio>
+    <audio id="background_music" src="audio/game.mp3" loop></audio>
 </head>
 <body>
     <!-- Animated Background -->
@@ -21,6 +25,14 @@
     <button id="themeToggle" class="theme-toggle" title="Toggle day/night mode">
         <span class="theme-icon">☀️</span>
     </button>
+    
+    <!-- Audio Control -->
+    <button id="audioToggle" class="audio-toggle" title="Toggle music">
+        <span class="audio-icon">🔇</span>
+    </button>
+    <div id="audioHint" class="audio-hint">
+        🎵 Turn on the music!
+    </div>
     
     <div id="gameAreaWrapper">
         <!-- Screenshot Notice -->

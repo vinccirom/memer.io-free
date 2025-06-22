@@ -296,6 +296,9 @@ window.onload = async function () {
     
     // Initialize animated background
     initializeBackground();
+    
+    // Initialize audio
+    initializeAudio();
 
     // Fetch game configuration from server
     try {
@@ -863,6 +866,73 @@ function resize() {
     }
 
     socket.emit('windowResized', { screenWidth: global.screen.width, screenHeight: global.screen.height });
+}
+
+// Initialize audio system
+function initializeAudio() {
+    const audioToggle = document.getElementById('audioToggle');
+    const audioIcon = audioToggle.querySelector('.audio-icon');
+    const bgMusic = document.getElementById('background_music');
+    
+    // Set initial volume
+    bgMusic.volume = 0.3; // 30% volume
+    
+    // Check for saved audio preference
+    const audioEnabled = localStorage.getItem('audioEnabled') !== 'false';
+    
+    // Function to update audio state
+    function updateAudioState(enabled) {
+        if (enabled) {
+            bgMusic.play().catch(err => {
+                // Handle autoplay policy - try playing on first user interaction
+                console.log('Autoplay prevented, will play on user interaction');
+            });
+            audioIcon.textContent = '🔊';
+        } else {
+            bgMusic.pause();
+            audioIcon.textContent = '🔇';
+        }
+        localStorage.setItem('audioEnabled', enabled);
+    }
+    
+    // Set initial state
+    updateAudioState(audioEnabled);
+    
+    // Toggle audio on click
+    audioToggle.addEventListener('click', function() {
+        const isPlaying = !bgMusic.paused;
+        updateAudioState(!isPlaying);
+    });
+    
+    // Try to play on first user interaction if autoplay was blocked
+    document.addEventListener('click', function playOnFirstInteraction() {
+        if (localStorage.getItem('audioEnabled') !== 'false' && bgMusic.paused) {
+            bgMusic.play().catch(err => console.log('Still cannot play:', err));
+        }
+        // Remove this listener after first interaction
+        document.removeEventListener('click', playOnFirstInteraction);
+    }, { once: true });
+    
+    // Show hint popup after 5 seconds if music is off
+    setTimeout(() => {
+        if (bgMusic.paused && !localStorage.getItem('audioHintShown')) {
+            const audioHint = document.getElementById('audioHint');
+            audioHint.classList.add('show');
+            
+            // Hide the hint after 3 seconds
+            setTimeout(() => {
+                audioHint.classList.remove('show');
+                localStorage.setItem('audioHintShown', 'true');
+            }, 3000);
+            
+            // Also hide if user clicks the audio toggle
+            audioToggle.addEventListener('click', function hideHint() {
+                audioHint.classList.remove('show');
+                localStorage.setItem('audioHintShown', 'true');
+                audioToggle.removeEventListener('click', hideHint);
+            });
+        }
+    }, 5000);
 }
 
 // Initialize animated background
