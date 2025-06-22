@@ -284,6 +284,7 @@ async function startGame(type) {
     global.screen.height = window.innerHeight;
 
     document.getElementById('startMenuWrapper').style.maxHeight = '0';
+    document.getElementById('startMenuWrapper').style.display = 'none';
     document.getElementById('gameAreaWrapper').style.opacity = 1;
     document.getElementById('gamePrizePool').style.display = 'block';
     document.getElementById('screenshotNotice').style.display = 'block';
@@ -718,6 +719,7 @@ function setupSocket(socket) {
         
         window.setTimeout(() => {
             document.getElementById('gameAreaWrapper').style.opacity = 0;
+            document.getElementById('startMenuWrapper').style.display = 'flex';
             document.getElementById('startMenuWrapper').style.maxHeight = '100vh';
             document.getElementById('gamePrizePool').style.display = 'none';
             document.getElementById('screenshotNotice').style.display = 'none';
