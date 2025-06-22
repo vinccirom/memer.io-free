@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Meta Properties -->
+    <meta charset="UTF-8">
+    <title>Memer.io - Solana Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css" />
+    <!-- Audio -->
+    <audio id="split_cell" src="audio/split.mp3"></audio>
+    <audio id="spawn_cell" src="audio/spawn.mp3"></audio>
+</head>
+<body>
+    <!-- Animated Background -->
+    <canvas id="backgroundCanvas"></canvas>
+    
+    <!-- Day/Night Mode Toggle -->
+    <button id="themeToggle" class="theme-toggle" title="Toggle day/night mode">
+        <span class="theme-icon">☀️</span>
+    </button>
+    
+    <div id="gameAreaWrapper">
+        <!-- Screenshot Notice -->
+        <div id="screenshotNotice" class="screenshot-notice">
+            📸 Press S to screenshot
+        </div>
+        
+        <!-- Prize Pool Display -->
+        <div id="gamePrizePool" class="game-prize-pool">
+            <span class="prize-label">PRIZE POOL:</span>
+            <span class="prize-amount" id="gamePrizeAmount">0.00 SOL</span>
+        </div>
+        
+        <div id="status"><span class="title">Leaderboard</span></div>
+        <div class="chatbox" id="chatbox">
+            <div class="chat-toggle" id="chatToggle">💬</div>
+            <ul id="chatList" class="chat-list"></ul>
+            <input id="chatInput" type="text" class="chat-input" placeholder="Chat here..." maxlength="35" />
+        </div>
+        <div id="mobile">
+           <input type="image" id="split" class="split" src="img/split.png" alt="splitBtn">
+           <input type="image" id="feed" class="feed" src="img/feed.png" alt="feedBtn">
+        </div>
+        <canvas tabindex="1" id="cvs"></canvas>
+    </div>
+    <div id="startMenuWrapper">
+        <div id="startMenu">
+            <h1 class="game-title">MEMER.IO<br><span class="subtitle">SOLANA EDITION</span></h1>
+            
+            <!-- Prize Pool Display -->
+            <div id="prizePoolDisplay" class="prize-pool-container">
+                <h3 class="prize-label">CURRENT PRIZE POOL</h3>
+                <div class="prize-amount" id="prizeAmount">0.00 SOL</div>
+            </div>
+
+            <!-- Wallet Connection Section -->
+            <div id="walletSection" class="wallet-section">
+                <button id="connectWalletBtn" class="retro-button wallet-button">
+                    <span class="button-text">CONNECT WALLET</span>
+                </button>
+                <div id="walletInfo" class="wallet-info" style="display: none;">
+                    <div class="wallet-address" id="walletAddress"></div>
+                    <div class="wallet-balance" id="walletBalance">Balance: 0.00 SOL</div>
+                </div>
+            </div>
+
+            <!-- Player Setup Section -->
+            <div id="playerSection" class="player-section" style="display: none;">
+                <input type="text" tabindex="0" placeholder="ENTER YOUR NAME" id="playerNameInput" maxlength="25" class="retro-input" />
+                <b class="input-error">Nick must be alphanumeric characters only!</b>
+                
+                <!-- Entry Fee Info -->
+                <div class="entry-fee-info">
+                    <div class="fee-label">ENTRY FEE</div>
+                    <div class="fee-amount">0.075 SOL</div>
+                </div>
+
+                <!-- Insufficient Funds Warning -->
+                <div id="insufficientFundsWarning" class="insufficient-funds-warning" style="display: none;">
+                    ⚠️ Insufficient funds
+                </div>
+
+                <!-- Skin Selector -->
+                <div class="skin-selector-container">
+                    <h3 class="skin-selector-title">CHOOSE YOUR SKIN</h3>
+                    <div id="skinGrid" class="skin-grid">
+                        <!-- Skins will be loaded here dynamically -->
+                    </div>
+                </div>
+
+                <button id="payAndPlayBtn" class="retro-button play-button">
+                    <span class="button-text">PAY & PLAY</span>
+                </button>
+                <button id="spectateButton" class="retro-button spectate-button">SPECTATE</button>
+            </div>
+
+            <!-- Settings Button -->
+            <button id="settingsButton" class="retro-button settings-button">SETTINGS</button>
+            
+            <!-- Settings Menu -->
+            <div id="settings" class="settings-menu">
+                <h3>SETTINGS</h3>
+                <ul>
+                    <label><input id="visBord" type="checkbox">Show border</label>
+                    <label><input id="showMass" type="checkbox">Show mass</label>
+                    <br />
+                    <label><input id="continuity" type="checkbox">Continue moving when mouse is off-screen</label>
+                    <br />
+                    <label><input id="roundFood" type="checkbox" checked>Rounded food</label>
+                    <label><input id="darkMode" type="checkbox">Toggle Dark Mode</label>
+                </ul>
+            </div>
+
+            <!-- Instructions -->
+            <div id="instructions" class="instructions">
+                <h3>HOW TO PLAY</h3>
+                <ul>
+                    <li>Connect your Solana wallet</li>
+                    <li>Pay entry fee (0.075 SOL)</li>
+                    <li>Move mouse to control your cell</li>
+                    <li>Eat food and other players to grow</li>
+                    <li>Press SPACE to split your cell</li>
+                    <li>Press W to eject mass</li>
+                    <li>First to reach 3000 mass wins the prize pool!</li>
+                </ul>
+            </div>
+            
+            <!-- Recent Winners -->
+            <div id="recentWinners" class="recent-winners">
+                <h3>RECENT WINNERS</h3>
+                <div id="winnersList" class="winners-list">
+                    <div class="loading-text">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">PROCESSING TRANSACTION...</div>
+        </div>
+    </div>
+    
+    <!-- Winner Announcement Overlay -->
+    <div id="winnerOverlay" class="winner-overlay" style="display: none;">
+        <div class="winner-content">
+            <h1 class="winner-title">🏆 WINNER! 🏆</h1>
+            <div class="winner-name" id="winnerName"></div>
+            <div class="winner-stats">
+                <div class="stat-item">
+                    <span class="stat-label">PRIZE WON:</span>
+                    <span class="stat-value" id="winnerPrize"></span>
+                </div>
+            </div>
+            <div class="winner-wallet">
+                <span class="wallet-label">WALLET:</span>
+                <span class="wallet-address" id="winnerWallet"></span>
+                <button class="copy-button" id="copyWalletBtn" title="Copy wallet address">📋</button>
+            </div>
+            <div class="transaction-info" id="transactionInfo" style="display: none;">
+                <span class="tx-label">TRANSACTION:</span>
+                <a href="#" class="tx-link" id="transactionId" target="_blank" rel="noopener noreferrer">View on Solscan</a>
+            </div>
+            <button id="refreshGameBtn" class="retro-button refresh-button">
+                <span class="button-text">PLAY AGAIN</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="//code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script>
+        // Make Solana Web3.js available globally
+        window.solanaWeb3 = solanaWeb3;
+    </script>
+    <script src="js/solana-wallet.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "memer-io",
+  "description": "A simple Agar.io clone",
+  "scripts": {
+    "build": "gulp build",
+    "start": "gulp run",
+    "watch": "gulp watch",
+    "test": "gulp test"
+  },
+  "repository": "https://github.com/huytd/memer.io"
+}
