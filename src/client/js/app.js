@@ -90,6 +90,27 @@ async function updatePrizePool() {
     }
 }
 
+// Update player count display
+async function updatePlayerCount() {
+    try {
+        const response = await fetch('/api/game-status');
+        const gameStatus = await response.json();
+        document.getElementById('playerCount').textContent = `Players: ${gameStatus.currentPlayers}/${gameStatus.maxPlayers}`;
+        
+        // Add warning color if getting close to full
+        const playerCountEl = document.getElementById('playerCount');
+        if (gameStatus.currentPlayers >= gameStatus.maxPlayers * 0.9) {
+            playerCountEl.style.color = '#FF5555'; // Red when 90% full
+        } else if (gameStatus.currentPlayers >= gameStatus.maxPlayers * 0.75) {
+            playerCountEl.style.color = '#FFD700'; // Yellow when 75% full
+        } else {
+            playerCountEl.style.color = '#4CAF50'; // Green otherwise
+        }
+    } catch (error) {
+        console.error('Error updating player count:', error);
+    }
+}
+
 // Show loading overlay
 function showLoading(show) {
     document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
@@ -316,6 +337,11 @@ window.onload = async function () {
     // Update prize pool every 30 seconds
     setInterval(updatePrizePool, 30000);
     
+    // Initialize player count display
+    updatePlayerCount();
+    // Update player count every 5 seconds
+    setInterval(updatePlayerCount, 5000);
+    
     // Load winner history
     loadWinnerHistory();
     
@@ -360,6 +386,21 @@ window.onload = async function () {
         // Check wallet connection
         if (!solanaWallet.isConnected) {
             showError('Please connect your wallet first');
+            return;
+        }
+
+        // Check if game is full BEFORE checking balance
+        try {
+            const statusResponse = await fetch('/api/game-status');
+            const gameStatus = await statusResponse.json();
+            
+            if (gameStatus.isFull) {
+                showError(`Game is full! (${gameStatus.currentPlayers}/${gameStatus.maxPlayers} players). Please try again later.`);
+                return;
+            }
+        } catch (error) {
+            console.error('Error checking game status:', error);
+            showError('Failed to check game status. Please try again.');
             return;
         }
 

@@ -62,6 +62,18 @@ app.get('/api/winners', (req, res) => {
     res.json(winnerHistory.slice(-10)); // Return last 10 winners
 });
 
+// API endpoint to check if game is full
+app.get('/api/game-status', (req, res) => {
+    const currentPlayerCount = map.players.data.length;
+    const isFull = currentPlayerCount >= config.maxPlayers;
+    res.json({
+        isFull: isFull,
+        currentPlayers: currentPlayerCount,
+        maxPlayers: config.maxPlayers,
+        spotsAvailable: Math.max(0, config.maxPlayers - currentPlayerCount)
+    });
+});
+
 // Process winner payout
 async function processWinnerPayout(winnerWallet) {
     try {
@@ -314,6 +326,11 @@ const addPlayer = (socket) => {
             socket.disconnect();
         } else if (!util.validNick(clientPlayerData.name)) {
             socket.emit('kick', 'Invalid username.');
+            socket.disconnect();
+        } else if (map.players.data.length >= config.maxPlayers) {
+            // Check if game is full
+            console.log('[INFO] Player ' + clientPlayerData.name + ' rejected - game full');
+            socket.emit('kick', `Game is full! (${config.maxPlayers} players max)`);
             socket.disconnect();
         } else {
             console.log('[INFO] Player ' + clientPlayerData.name + ' connected!');

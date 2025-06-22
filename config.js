@@ -32,6 +32,7 @@ module.exports = {
     massLossRate: 1,
     minMassLoss: 50,
     winnerMassThreshold: 3000, // First player to reach 3000 mass wins
+    maxPlayers: 100, // Maximum number of players allowed in the game
     sqlinfo: {
       fileName: "db.sqlite3",
     }
