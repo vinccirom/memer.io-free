@@ -49,6 +49,11 @@ if (!TREASURY_WALLET || !DEV_WALLET) {
 
 app.use(express.static(__dirname + '/../client'));
 
+// Health check endpoint for Digital Ocean
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'healthy' });
+});
+
 // API endpoint for game configuration
 app.get('/api/config', (req, res) => {
     res.json({
