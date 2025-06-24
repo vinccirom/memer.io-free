@@ -27,10 +27,15 @@ class SolanaWallet {
         this.DEV_PERCENTAGE = 0.1; // 10%
     }
 
-    // Set wallet addresses from server config
-    setWalletAddresses(treasuryWallet, devWallet) {
+    // Set wallet addresses and fee config from server
+    setWalletAddresses(treasuryWallet, devWallet, entryFee = 0.075, platformFeePercentage = 10) {
         this.TREASURY_WALLET = treasuryWallet;
         this.DEV_WALLET = devWallet;
+        this.ENTRY_FEE = entryFee;
+        
+        // Calculate percentages based on platform fee
+        this.DEV_PERCENTAGE = platformFeePercentage / 100;
+        this.TREASURY_PERCENTAGE = 1 - this.DEV_PERCENTAGE;
     }
 
     // Check if Phantom wallet is installed

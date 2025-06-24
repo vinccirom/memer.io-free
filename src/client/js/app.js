@@ -326,7 +326,14 @@ window.onload = async function () {
     try {
         const response = await fetch('/api/config');
         const config = await response.json();
-        solanaWallet.setWalletAddresses(config.treasuryWallet, config.devWallet);
+        solanaWallet.setWalletAddresses(config.treasuryWallet, config.devWallet, config.entryFee, config.platformFeePercentage);
+        
+        // Update UI with dynamic values from server
+        document.getElementById('entryFeeDisplay').textContent = config.entryFee + ' SOL';
+        document.getElementById('entryFeeInstructions').textContent = config.entryFee + ' SOL';
+        if (config.winnerMassThreshold) {
+            document.getElementById('winnerMassThreshold').textContent = config.winnerMassThreshold;
+        }
     } catch (error) {
         console.error('Failed to fetch game configuration:', error);
         showError('Failed to load game configuration. Please refresh the page.');

@@ -1,6 +1,6 @@
 module.exports = {
-    host: "0.0.0.0",
-    port: 3000,
+    host: process.env.HOST || "0.0.0.0",
+    port: process.env.PORT || 3000,
     logpath: "logger.php",
     foodMass: 1,
     fireFood: 20,
@@ -31,8 +31,8 @@ module.exports = {
     newPlayerInitialPosition: "farthest",
     massLossRate: 1,
     minMassLoss: 50,
-    winnerMassThreshold: 3000, // First player to reach 3000 mass wins
-    maxPlayers: 100, // Maximum number of players allowed in the game
+    winnerMassThreshold: parseInt(process.env.WINNER_MASS_THRESHOLD || '3000'), // First player to reach this mass wins
+    maxPlayers: parseInt(process.env.MAX_PLAYERS || '100'), // Maximum number of players allowed in the game
     sqlinfo: {
       fileName: "db.sqlite3",
     }

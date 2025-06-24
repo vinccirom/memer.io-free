@@ -37,7 +37,8 @@ const Vector = SAT.Vector;
 const TREASURY_WALLET = process.env.TREASURY_WALLET;
 const DEV_WALLET = process.env.DEV_WALLET;
 const TREASURY_PRIVATE_KEY = process.env.TREASURY_PRIVATE_KEY;
-const ENTRY_FEE = 0.075; // SOL
+const ENTRY_FEE = parseFloat(process.env.ENTRY_FEE || '0.075'); // SOL
+const PLATFORM_FEE_PERCENTAGE = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE || '10'); // Platform fee percentage
 
 // Validate wallet addresses
 if (!TREASURY_WALLET || !DEV_WALLET) {
@@ -53,7 +54,9 @@ app.get('/api/config', (req, res) => {
     res.json({
         treasuryWallet: TREASURY_WALLET,
         devWallet: DEV_WALLET,
-        entryFee: ENTRY_FEE
+        entryFee: ENTRY_FEE,
+        platformFeePercentage: PLATFORM_FEE_PERCENTAGE,
+        winnerMassThreshold: config.winnerMassThreshold
     });
 });
 

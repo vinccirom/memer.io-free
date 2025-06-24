@@ -88,7 +88,7 @@
                 <!-- Entry Fee Info -->
                 <div class="entry-fee-info">
                     <div class="fee-label">ENTRY FEE</div>
-                    <div class="fee-amount">0.075 SOL</div>
+                    <div class="fee-amount" id="entryFeeDisplay">-- SOL</div>
                 </div>
 
                 <!-- Insufficient Funds Warning -->
@@ -132,12 +132,12 @@
                 <h3>HOW TO PLAY</h3>
                 <ul>
                     <li>Connect your Solana wallet</li>
-                    <li>Pay entry fee (0.075 SOL)</li>
+                    <li>Pay entry fee (<span id="entryFeeInstructions">-- SOL</span>)</li>
                     <li>Move mouse to control your cell</li>
                     <li>Eat food and other players to grow</li>
                     <li>Press SPACE to split your cell</li>
                     <li>Press W to eject mass</li>
-                    <li>First to reach 3000 mass wins the prize pool!</li>
+                    <li>First to reach <span id="winnerMassThreshold">--</span> mass wins the prize pool!</li>
                 </ul>
             </div>
             
