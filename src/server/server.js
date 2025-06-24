@@ -557,6 +557,15 @@ const tickGame = () => {
             io.emit('playerDied', { name: playerGotEaten.name }); //TODO: on client it is `playerEatenName` instead of `name`
             sockets[playerGotEaten.id].emit('RIP');
             map.players.removePlayerByIndex(gotEaten.playerIndex);
+            
+            // Disconnect the eliminated player's socket after a small delay
+            // This prevents them from rejoining as a player when clicking spectate
+            setTimeout(() => {
+                if (sockets[playerGotEaten.id]) {
+                    sockets[playerGotEaten.id].disconnect();
+                    delete sockets[playerGotEaten.id];
+                }
+            }, 100);
         }
     });
     

@@ -724,6 +724,11 @@ function setupSocket(socket) {
             global.heartbeatInterval = null;
         }
         
+        // Disconnect socket to ensure clean state
+        // This prevents rejoining as a player when clicking spectate
+        socket.disconnect();
+        socket = null;
+        
         window.setTimeout(() => {
             document.getElementById('gameAreaWrapper').style.opacity = 0;
             document.getElementById('startMenuWrapper').style.display = 'flex';
