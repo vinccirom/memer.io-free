@@ -48,7 +48,17 @@ function checkSufficientBalance(balance) {
     const insufficientFundsWarning = document.getElementById('insufficientFundsWarning');
     const hasEnoughBalance = balance >= solanaWallet.ENTRY_FEE;
     
-    if (!hasEnoughBalance) {
+    // Check if user is on mobile
+    if (global.mobile) {
+        payAndPlayBtn.disabled = true;
+        payAndPlayBtn.style.opacity = '0.5';
+        payAndPlayBtn.style.cursor = 'not-allowed';
+        
+        if (insufficientFundsWarning) {
+            insufficientFundsWarning.style.display = 'block';
+            insufficientFundsWarning.innerHTML = '⚠️ The game should be played on computer, soon available on mobile';
+        }
+    } else if (!hasEnoughBalance) {
         payAndPlayBtn.disabled = true;
         payAndPlayBtn.style.opacity = '0.5';
         payAndPlayBtn.style.cursor = 'not-allowed';
@@ -356,6 +366,11 @@ window.onload = async function () {
     // Initialize skins
     initializeSkins();
 
+    // Check if mobile and disable pay button
+    if (global.mobile) {
+        checkSufficientBalance(0); // This will disable the button and show mobile message
+    }
+
     // Connect wallet button
     connectWalletBtn.onclick = async function () {
         showLoading(true);
@@ -376,6 +391,12 @@ window.onload = async function () {
 
     // Pay and play button
     payAndPlayBtn.onclick = async function () {
+        // Check if user is on mobile
+        if (global.mobile) {
+            showError('The game should be played on computer, soon available on mobile');
+            return;
+        }
+
         // Validate nickname is not empty
         if (playerNameInput.value.trim() === '') {
             nickErrorText.textContent = 'Please enter a name!';
