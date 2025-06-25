@@ -540,16 +540,20 @@ window.canvas = new Canvas();
 window.chat = new ChatClient();
 
 var visibleBorderSetting = document.getElementById('visBord');
-visibleBorderSetting.onchange = settings.toggleBorder;
+visibleBorderSetting.checked = global.borderDraw;
+visibleBorderSetting.onchange = function() { window.chat.toggleBorder(); };
 
 var showMassSetting = document.getElementById('showMass');
-showMassSetting.onchange = settings.toggleMass;
+showMassSetting.checked = global.toggleMassState === 1;
+showMassSetting.onchange = function() { window.chat.toggleMass(); };
 
 var continuitySetting = document.getElementById('continuity');
-continuitySetting.onchange = settings.toggleContinuity;
+continuitySetting.checked = global.continuity;
+continuitySetting.onchange = function() { window.chat.toggleContinuity(); };
 
 var roundFoodSetting = document.getElementById('roundFood');
-roundFoodSetting.onchange = settings.toggleRoundFood;
+roundFoodSetting.checked = global.toggleRoundFood;
+roundFoodSetting.onchange = function() { window.chat.toggleRoundFood(); };
 
 var c = window.canvas.cv;
 var graph = c.getContext('2d');
