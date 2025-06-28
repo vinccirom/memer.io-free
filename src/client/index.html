@@ -3,7 +3,7 @@
 <head>
     <!-- Meta Properties -->
     <meta charset="UTF-8">
-    <title>Memer.io - Solana Edition</title>
+    <title>Memer.io - Free Edition</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="img/memer-logo.png">
@@ -40,11 +40,7 @@
             📸 Press S to screenshot
         </div>
         
-        <!-- Prize Pool Display -->
-        <div id="gamePrizePool" class="game-prize-pool">
-            <span class="prize-label">PRIZE POOL:</span>
-            <span class="prize-amount" id="gamePrizeAmount">0.00 SOL</span>
-        </div>
+        <!-- Game Status Display -->
         
         <div id="status"><span class="title">Leaderboard</span></div>
         <div class="chatbox" id="chatbox">
@@ -60,41 +56,18 @@
     </div>
     <div id="startMenuWrapper">
         <div id="startMenu">
-            <h1 class="game-title">MEMER.IO<br><span class="subtitle">SOLANA EDITION</span></h1>
+            <h1 class="game-title">MEMER.IO<br><span class="subtitle">FREE EDITION</span></h1>
             
-            <!-- Prize Pool Display -->
+            <!-- Player Count Display -->
             <div id="prizePoolDisplay" class="prize-pool-container">
-                <h3 class="prize-label">CURRENT PRIZE POOL</h3>
-                <div class="prize-amount" id="prizeAmount">0.00 SOL</div>
                 <div class="player-count" id="playerCount">Players: 0/50</div>
             </div>
 
-            <!-- Wallet Connection Section -->
-            <div id="walletSection" class="wallet-section">
-                <button id="connectWalletBtn" class="retro-button wallet-button">
-                    <span class="button-text">CONNECT WALLET</span>
-                </button>
-                <div id="walletInfo" class="wallet-info" style="display: none;">
-                    <div class="wallet-address" id="walletAddress"></div>
-                    <div class="wallet-balance" id="walletBalance">Balance: 0.00 SOL</div>
-                </div>
-            </div>
-
             <!-- Player Setup Section -->
-            <div id="playerSection" class="player-section" style="display: none;">
+            <div id="playerSection" class="player-section">
                 <input type="text" tabindex="0" placeholder="ENTER YOUR NAME" id="playerNameInput" maxlength="25" class="retro-input" />
                 <b class="input-error">Nick must be alphanumeric characters only!</b>
                 
-                <!-- Entry Fee Info -->
-                <div class="entry-fee-info">
-                    <div class="fee-label">ENTRY FEE</div>
-                    <div class="fee-amount" id="entryFeeDisplay">-- SOL</div>
-                </div>
-
-                <!-- Insufficient Funds Warning -->
-                <div id="insufficientFundsWarning" class="insufficient-funds-warning" style="display: none;">
-                    ⚠️ Insufficient funds
-                </div>
 
                 <!-- Skin Selector -->
                 <div class="skin-selector-container">
@@ -104,8 +77,8 @@
                     </div>
                 </div>
 
-                <button id="payAndPlayBtn" class="retro-button play-button">
-                    <span class="button-text">PAY & PLAY</span>
+                <button id="playBtn" class="retro-button play-button">
+                    <span class="button-text">PLAY</span>
                 </button>
                 <button id="spectateButton" class="retro-button spectate-button">SPECTATE</button>
             </div>
@@ -131,13 +104,12 @@
             <div id="instructions" class="instructions">
                 <h3>HOW TO PLAY</h3>
                 <ul>
-                    <li>Connect your Solana wallet</li>
-                    <li>Pay entry fee (<span id="entryFeeInstructions">-- SOL</span>)</li>
+                    <li>Enter your nickname</li>
                     <li>Move mouse to control your cell</li>
                     <li>Eat food and other players to grow</li>
                     <li>Press SPACE to split your cell</li>
                     <li>Press W to eject mass</li>
-                    <li>First to reach <span id="winnerMassThreshold">--</span> mass wins the prize pool!</li>
+                    <li>First to reach <span id="winnerMassThreshold">--</span> mass wins!</li>
                 </ul>
             </div>
             
@@ -166,18 +138,8 @@
             <div class="winner-name" id="winnerName"></div>
             <div class="winner-stats">
                 <div class="stat-item">
-                    <span class="stat-label">PRIZE WON:</span>
-                    <span class="stat-value" id="winnerPrize"></span>
+                    <span class="stat-label">CONGRATULATIONS!</span>
                 </div>
-            </div>
-            <div class="winner-wallet">
-                <span class="wallet-label">WALLET:</span>
-                <span class="wallet-address" id="winnerWallet"></span>
-                <button class="copy-button" id="copyWalletBtn" title="Copy wallet address">📋</button>
-            </div>
-            <div class="transaction-info" id="transactionInfo" style="display: none;">
-                <span class="tx-label">TRANSACTION:</span>
-                <a href="#" class="tx-link" id="transactionId" target="_blank" rel="noopener noreferrer">View on Solscan</a>
             </div>
             <button id="refreshGameBtn" class="retro-button refresh-button">
                 <span class="button-text">PLAY AGAIN</span>
@@ -187,12 +149,6 @@
 
     <!-- JS -->
     <script src="//code.jquery.com/jquery-2.2.0.min.js"></script>
-    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-    <script>
-        // Make Solana Web3.js available globally
-        window.solanaWeb3 = solanaWeb3;
-    </script>
-    <script src="js/solana-wallet.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

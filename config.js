@@ -19,7 +19,7 @@ module.exports = {
 	},
     gameWidth: 5000,
     gameHeight: 5000,
-    adminPass: "memersol99",
+    adminPass: "memerfree2024",
     gameMass: 20000,
     maxFood: 1000,
     maxVirus: 50,

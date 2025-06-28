@@ -8,8 +8,6 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const SAT = require('sat');
-const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, Keypair } = require('@solana/web3.js');
-const bs58 = require('bs58');
 
 const gameLogic = require('./game-logic');
 const loggingRepositry = require('./repositories/logging-repository');
@@ -23,7 +21,6 @@ let map = new mapUtils.Map(config);
 
 let sockets = {};
 let spectators = [];
-let paidPlayers = {}; // Track players who have paid
 let gameWon = false; // Track if game has been won
 let winnerHistory = []; // Store history of winners
 const INIT_MASS_LOG = util.mathLog(config.defaultPlayerMass, config.slowBase);
@@ -33,19 +30,6 @@ let leaderboardChanged = false;
 
 const Vector = SAT.Vector;
 
-// Solana configuration
-const TREASURY_WALLET = process.env.TREASURY_WALLET;
-const DEV_WALLET = process.env.DEV_WALLET;
-const TREASURY_PRIVATE_KEY = process.env.TREASURY_PRIVATE_KEY;
-const ENTRY_FEE = parseFloat(process.env.ENTRY_FEE || '0.075'); // SOL
-const PLATFORM_FEE_PERCENTAGE = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE || '10'); // Platform fee percentage
-
-// Validate wallet addresses
-if (!TREASURY_WALLET || !DEV_WALLET) {
-    console.error('[ERROR] Missing wallet addresses in environment variables!');
-    console.error('Please set TREASURY_WALLET and DEV_WALLET in your .env file');
-    process.exit(1);
-}
 
 app.use(express.static(__dirname + '/../client'));
 
@@ -57,10 +41,6 @@ app.get('/health', (req, res) => {
 // API endpoint for game configuration
 app.get('/api/config', (req, res) => {
     res.json({
-        treasuryWallet: TREASURY_WALLET,
-        devWallet: DEV_WALLET,
-        entryFee: ENTRY_FEE,
-        platformFeePercentage: PLATFORM_FEE_PERCENTAGE,
         winnerMassThreshold: config.winnerMassThreshold
     });
 });
@@ -82,115 +62,23 @@ app.get('/api/game-status', (req, res) => {
     });
 });
 
-// Process winner payout
-async function processWinnerPayout(winnerWallet) {
-    try {
-        if (!TREASURY_PRIVATE_KEY) {
-            console.error('[PAYOUT] Treasury private key not configured!');
-            return { success: false, error: 'Treasury private key not configured' };
-        }
-        
-        // Get treasury balance
-        const connection = new Connection('https://jolyn-7h3xbe-fast-mainnet.helius-rpc.com', 'confirmed');
-        const treasuryPubkey = new PublicKey(TREASURY_WALLET);
-        const treasuryBalance = await connection.getBalance(treasuryPubkey);
-        
-        // Reserve some SOL for transaction fees (0.001 SOL)
-        const feeReserve = 0.001 * LAMPORTS_PER_SOL;
-        const payoutLamports = treasuryBalance - feeReserve;
-        
-        if (payoutLamports <= 0) {
-            return { success: false, error: 'Insufficient treasury balance for payout' };
-        }
-        
-        const payoutAmount = payoutLamports / LAMPORTS_PER_SOL;
-        
-        // Create keypair from private key
-        const treasuryKeypair = Keypair.fromSecretKey(bs58.decode(TREASURY_PRIVATE_KEY));
-        
-        // Create payout transaction
-        const transaction = new Transaction();
-        transaction.add(
-            SystemProgram.transfer({
-                fromPubkey: treasuryPubkey,
-                toPubkey: new PublicKey(winnerWallet),
-                lamports: payoutLamports,
-            })
-        );
-        
-        // Get recent blockhash
-        const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = treasuryPubkey;
-        
-        // Sign and send transaction
-        transaction.sign(treasuryKeypair);
-        const signature = await connection.sendRawTransaction(transaction.serialize());
-        
-        // Wait for confirmation
-        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-        
-        if (confirmation.value.err) {
-            throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
-        }
-        
-        console.log('[PAYOUT] Winner payout successful!');
-        console.log('[PAYOUT] Transaction ID:', signature);
-        console.log('[PAYOUT] Amount:', payoutAmount, 'SOL');
-        
-        return {
-            success: true,
-            amount: payoutAmount,
-            transactionId: signature,
-            message: 'Payout transaction completed'
-        };
-    } catch (error) {
-        console.error('[PAYOUT] Error processing payout:', error);
-        return { success: false, error: error.message };
-    }
-}
 
 // Handle winner
 async function handleWinner(winner) {
     console.log('[GAME] Winner found:', winner.name, 'with mass:', winner.massTotal);
     
-    // Find winner's wallet address
-    let winnerWallet = null;
-    for (const socketId in paidPlayers) {
-        if (paidPlayers[socketId].playerName === winner.name) {
-            winnerWallet = paidPlayers[socketId].walletAddress;
-            break;
-        }
-    }
-    
-    if (!winnerWallet) {
-        console.error('[GAME] Winner wallet not found!');
-        return;
-    }
-    
-    // Process payout
-    const payoutResult = await processWinnerPayout(winnerWallet);
-    
     // Store winner in history
     const winnerRecord = {
         name: winner.name,
-        walletAddress: winnerWallet,
         mass: winner.massTotal,
-        prizeAmount: payoutResult.amount || 0,
-        timestamp: new Date().toISOString(),
-        transactionId: payoutResult.transactionId || 'pending'
+        timestamp: new Date().toISOString()
     };
     winnerHistory.push(winnerRecord);
     
     // Emit winner announcement to all players
     io.emit('gameWon', {
         winner: winner.name,
-        walletAddress: winnerWallet,
-        mass: winner.massTotal,
-        prizeAmount: payoutResult.amount || 0,
-        transactionId: payoutResult.transactionId || 'pending',
-        payoutSuccess: payoutResult.success,
-        payoutError: payoutResult.error || null
+        mass: winner.massTotal
     });
     
     // Reset game after 2 minutes to give players time to celebrate and screenshot
@@ -209,10 +97,6 @@ function resetGame() {
     // Reset game state
     gameWon = false;
     
-    // Clear paid players
-    for (const socketId in paidPlayers) {
-        delete paidPlayers[socketId];
-    }
     
     // Disconnect all sockets
     for (const socketId in sockets) {
@@ -226,74 +110,11 @@ function resetGame() {
     console.log('[GAME] Game reset complete');
 }
 
-// Verify Solana payment
-async function verifyPayment(transactionId, expectedAmount = ENTRY_FEE) {
-    try {
-        const connection = new Connection('https://jolyn-7h3xbe-fast-mainnet.helius-rpc.com', 'confirmed');
-        const transaction = await connection.getTransaction(transactionId, {
-            maxSupportedTransactionVersion: 0
-        });
-        
-        if (!transaction) {
-            return { valid: false, error: 'Transaction not found' };
-        }
-
-        // Check if transaction was successful
-        if (transaction.meta.err !== null) {
-            return { valid: false, error: 'Transaction failed' };
-        }
-
-        // Verify the amounts - simplified version
-        const postBalances = transaction.meta.postBalances;
-        const preBalances = transaction.meta.preBalances;
-        
-        let totalTransferred = 0;
-        for (let i = 0; i < postBalances.length; i++) {
-            if (preBalances[i] > postBalances[i]) {
-                totalTransferred += (preBalances[i] - postBalances[i]) / LAMPORTS_PER_SOL;
-            }
-        }
-
-        if (Math.abs(totalTransferred - expectedAmount) < 0.001) { // Allow small rounding differences
-            return { valid: true, amount: totalTransferred };
-        } else {
-            return { valid: false, error: 'Invalid payment amount' };
-        }
-    } catch (error) {
-        console.error('Error verifying payment:', error);
-        return { valid: false, error: error.message };
-    }
-}
 
 io.on('connection', function (socket) {
     let type = socket.handshake.query.type;
     console.log('User has connected: ', type);
     
-    // Handle payment verification
-    socket.on('verifyPayment', async function(data) {
-        const { transactionId, playerName, walletAddress, skin } = data;
-        
-        console.log('[PAYMENT] Verifying payment for player:', playerName);
-        
-        const verification = await verifyPayment(transactionId);
-        
-        if (verification.valid) {
-            // Store the player as paid
-            paidPlayers[socket.id] = {
-                walletAddress: walletAddress,
-                playerName: playerName,
-                transactionId: transactionId,
-                skin: skin || 'none',
-                paidAt: new Date()
-            };
-            
-            console.log('[PAYMENT] Payment verified for player:', playerName);
-            socket.emit('paymentVerified', { success: true });
-        } else {
-            console.log('[PAYMENT] Payment verification failed for player:', playerName, verification.error);
-            socket.emit('paymentVerified', { success: false, error: verification.error });
-        }
-    });
     
     switch (type) {
         case 'player':
@@ -317,14 +138,6 @@ const addPlayer = (socket) => {
     var currentPlayer = new mapUtils.playerUtils.Player(socket.id);
 
     socket.on('gotit', function (clientPlayerData) {
-        // Check if player has paid (for non-spectators)
-        if (!paidPlayers[socket.id] && socket.handshake.query.type === 'player') {
-            console.log('[WARNING] Player ' + clientPlayerData.name + ' sent gotit without payment verification!');
-            console.log('[DEBUG] Current paidPlayers:', Object.keys(paidPlayers));
-            socket.emit('kick', 'Payment required to play. Please refresh and try again.');
-            socket.disconnect();
-            return;
-        }
         
         console.log('[INFO] Player ' + clientPlayerData.name + ' connecting!');
         currentPlayer.init(generateSpawnpoint(), config.defaultPlayerMass);
@@ -378,11 +191,6 @@ const addPlayer = (socket) => {
         console.log('[INFO] User ' + currentPlayer.name + ' has disconnected');
         socket.broadcast.emit('playerDisconnect', { name: currentPlayer.name });
         
-        // Clean up paid player record
-        if (paidPlayers[socket.id]) {
-            console.log('[INFO] Removing payment record for disconnected player: ' + currentPlayer.name);
-            delete paidPlayers[socket.id];
-        }
     });
 
     socket.on('playerChat', (data) => {

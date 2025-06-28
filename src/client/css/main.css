@@ -60,33 +60,6 @@ div {
     display: none; /* Hidden by default, shown when in game */
 }
 
-/* In-game Prize Pool Display */
-.game-prize-pool {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid #FFD700;
-    padding: 10px 20px;
-    z-index: 100;
-    text-align: center;
-    font-family: 'Press Start 2P', monospace;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-    display: none; /* Hidden by default, shown when in game */
-}
-
-.game-prize-pool .prize-label {
-    color: #FFD700;
-    font-size: 12px;
-    margin-right: 10px;
-}
-
-.game-prize-pool .prize-amount {
-    color: #FFFFFF;
-    font-size: 14px;
-    text-shadow: 0 0 5px #FFD700;
-}
 
 #status {
     position: absolute;
@@ -293,27 +266,14 @@ div {
     to { text-shadow: 3px 3px 0px #000000, 0 0 20px #4CAF50, 0 0 30px #4CAF50; }
 }
 
-/* Prize Pool Display */
+/* Player Count Display */
 .prize-pool-container {
     background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #FFD700;
+    border: 2px solid #4CAF50;
     padding: 20px;
     margin: 20px 0;
     text-align: center;
-    box-shadow: 0 0 15px #FFD700;
-}
-
-.prize-label {
-    font-size: 16px;
-    color: #FFD700;
-    margin: 0 0 10px 0;
-}
-
-.prize-amount {
-    font-size: 32px;
-    color: #FFD700;
-    text-shadow: 2px 2px 0px #000000;
-    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 15px #4CAF50;
 }
 
 @keyframes pulse {
@@ -329,30 +289,6 @@ div {
     opacity: 0.8;
 }
 
-/* Wallet Section */
-.wallet-section {
-    margin: 20px 0;
-    text-align: center;
-}
-
-.wallet-info {
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #4CAF50;
-    padding: 15px;
-    margin-top: 10px;
-}
-
-.wallet-address {
-    font-size: 10px;
-    color: #4CAF50;
-    margin-bottom: 5px;
-    word-break: break-all;
-}
-
-.wallet-balance {
-    font-size: 12px;
-    color: #FFD700;
-}
 
 /* Player Section */
 .player-section {
@@ -388,53 +324,6 @@ div {
     width: 100%;
 }
 
-/* Entry Fee Info */
-.entry-fee-info {
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #FF9800;
-    padding: 15px;
-    margin: 20px 0;
-    text-align: center;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.fee-label {
-    font-size: 14px;
-    color: #FF9800;
-    margin-bottom: 5px;
-}
-
-.fee-amount {
-    font-size: 24px;
-    color: #FFD700;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 0px #000000;
-}
-
-/* Insufficient Funds Warning */
-.insufficient-funds-warning {
-    background: rgba(255, 0, 0, 0.2);
-    border: 2px solid #FF5555;
-    padding: 10px;
-    margin: 10px 0;
-    text-align: center;
-    width: 100%;
-    box-sizing: border-box;
-    animation: pulse-warning 1s ease-in-out infinite;
-}
-
-.insufficient-funds-warning {
-    color: #FFFFFF;
-    font-size: 12px;
-    text-shadow: 0 0 5px #FF5555;
-}
-
-@keyframes pulse-warning {
-    0% { opacity: 0.8; }
-    50% { opacity: 1; }
-    100% { opacity: 0.8; }
-}
 
 /* Skin Selector */
 .skin-selector-container {
@@ -532,15 +421,6 @@ div {
     opacity: 1;
 }
 
-.fee-distribution {
-    display: flex;
-    justify-content: space-around;
-    font-size: 10px;
-}
-
-.distribution-item {
-    color: #FFFFFF;
-}
 
 /* Retro Buttons */
 .retro-button {
@@ -571,15 +451,6 @@ div {
     box-shadow: none;
 }
 
-.wallet-button {
-    background: #FFD700;
-    box-shadow: 0 5px 0 #B8860B;
-}
-
-.wallet-button:hover {
-    background: #FFED4E;
-    box-shadow: 0 5px 0 #DAA520;
-}
 
 .play-button {
     background: #4CAF50;
@@ -822,24 +693,6 @@ div {
     color: #FFFFFF;
 }
 
-.winner-wallet {
-    margin: 20px 0;
-    font-family: 'Press Start 2P', monospace;
-    position: relative;
-}
-
-.wallet-label {
-    font-size: 12px;
-    color: #4CAF50;
-    display: block;
-    margin-bottom: 10px;
-}
-
-.wallet-address {
-    font-size: 10px;
-    color: #FFFFFF;
-    word-break: break-all;
-}
 
 .transaction-info {
     margin: 20px 0;
@@ -988,9 +841,6 @@ div {
         font-size: 16px;
     }
     
-    .prize-amount {
-        font-size: 24px;
-    }
     
     .retro-button {
         font-size: 14px;

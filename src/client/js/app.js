@@ -3,11 +3,9 @@ var render = require('./render');
 var ChatClient = require('./chat-client');
 var Canvas = require('./canvas');
 var global = require('./global');
-var SolanaWallet = require('./solana-wallet');
 
 var playerNameInput = document.getElementById('playerNameInput');
 var socket;
-var solanaWallet = new SolanaWallet();
 
 // Skin system
 var selectedSkin = null;
@@ -42,39 +40,15 @@ var availableSkins = [
     { id: 'zerebro', name: 'zerebro', path: 'img/skins/zerebro.webp' }
 ];
 
-// Check if user has sufficient balance
-function checkSufficientBalance(balance) {
-    const payAndPlayBtn = document.getElementById('payAndPlayBtn');
-    const insufficientFundsWarning = document.getElementById('insufficientFundsWarning');
-    const hasEnoughBalance = balance >= solanaWallet.ENTRY_FEE;
+// Check if user is on mobile
+function checkIfMobile() {
+    const playBtn = document.getElementById('playBtn');
     
-    // Check if user is on mobile
     if (global.mobile) {
-        payAndPlayBtn.disabled = true;
-        payAndPlayBtn.style.opacity = '0.5';
-        payAndPlayBtn.style.cursor = 'not-allowed';
-        
-        if (insufficientFundsWarning) {
-            insufficientFundsWarning.style.display = 'block';
-            insufficientFundsWarning.innerHTML = '⚠️ The game should be played on computer, soon available on mobile';
-        }
-    } else if (!hasEnoughBalance) {
-        payAndPlayBtn.disabled = true;
-        payAndPlayBtn.style.opacity = '0.5';
-        payAndPlayBtn.style.cursor = 'not-allowed';
-        
-        if (insufficientFundsWarning) {
-            insufficientFundsWarning.style.display = 'block';
-            insufficientFundsWarning.innerHTML = '⚠️ Insufficient funds';
-        }
-    } else {
-        payAndPlayBtn.disabled = false;
-        payAndPlayBtn.style.opacity = '1';
-        payAndPlayBtn.style.cursor = 'pointer';
-        
-        if (insufficientFundsWarning) {
-            insufficientFundsWarning.style.display = 'none';
-        }
+        playBtn.disabled = true;
+        playBtn.style.opacity = '0.5';
+        playBtn.style.cursor = 'not-allowed';
+        playBtn.innerHTML = '<span class="button-text">MOBILE NOT SUPPORTED</span>';
     }
 }
 
@@ -88,17 +62,6 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent)) {
     global.mobile = true;
 }
 
-// Update prize pool display
-async function updatePrizePool() {
-    try {
-        const prizePool = await solanaWallet.getPrizePool();
-        // Update both menu and in-game prize pool displays
-        document.getElementById('prizeAmount').textContent = prizePool.toFixed(2) + ' SOL';
-        document.getElementById('gamePrizeAmount').textContent = prizePool.toFixed(2) + ' SOL';
-    } catch (error) {
-        console.error('Error updating prize pool:', error);
-    }
-}
 
 // Update player count display
 async function updatePlayerCount() {
@@ -146,24 +109,12 @@ async function loadWinnerHistory() {
         
         winnersList.innerHTML = winners.map(winner => {
             const date = new Date(winner.timestamp).toLocaleDateString();
-            const shortWallet = winner.walletAddress.substring(0, 6) + '...' + winner.walletAddress.substring(winner.walletAddress.length - 4);
-            const shortTx = winner.transactionId && winner.transactionId !== 'pending' 
-                ? winner.transactionId.substring(0, 8) + '...' 
-                : 'pending';
             
             return `
                 <div class="winner-item">
                     <div class="winner-item-name">${winner.name}</div>
                     <div class="winner-item-details">
-                        Prize: ${winner.prizeAmount.toFixed(2)} SOL
-                    </div>
-                    <div class="winner-item-wallet">
-                        ${shortWallet} | ${date}
-                    </div>
-                    <div class="winner-item-tx">
-                        TX: ${winner.transactionId && winner.transactionId !== 'pending' 
-                            ? `<a href="https://solscan.io/tx/${winner.transactionId}" target="_blank" rel="noopener noreferrer" class="tx-link">${shortTx}</a>` 
-                            : '<span class="tx-pending">pending</span>'}
+                        Winner | ${date}
                     </div>
                 </div>
             `;
@@ -174,30 +125,6 @@ async function loadWinnerHistory() {
     }
 }
 
-// Update wallet UI
-function updateWalletUI(connected, address = '', balance = 0) {
-    const connectBtn = document.getElementById('connectWalletBtn');
-    const walletInfo = document.getElementById('walletInfo');
-    const playerSection = document.getElementById('playerSection');
-    
-    if (connected) {
-        connectBtn.style.display = 'none';
-        walletInfo.style.display = 'block';
-        playerSection.style.display = 'block';
-        
-        // Show shortened address
-        const shortAddress = address.substring(0, 4) + '...' + address.substring(address.length - 4);
-        document.getElementById('walletAddress').textContent = shortAddress;
-        document.getElementById('walletBalance').textContent = 'Balance: ' + balance.toFixed(4) + ' SOL';
-        
-        // Check if balance is sufficient and update button state
-        checkSufficientBalance(balance);
-    } else {
-        connectBtn.style.display = 'block';
-        walletInfo.style.display = 'none';
-        playerSection.style.display = 'none';
-    }
-}
 
 // Initialize skin system
 function initializeSkins() {
@@ -296,7 +223,6 @@ async function startGame(type) {
     document.getElementById('startMenuWrapper').style.maxHeight = '0';
     document.getElementById('startMenuWrapper').style.display = 'none';
     document.getElementById('gameAreaWrapper').style.opacity = 1;
-    document.getElementById('gamePrizePool').style.display = 'block';
     document.getElementById('screenshotNotice').style.display = 'block';
     document.body.classList.add('game-active');
     if (!socket) {
@@ -321,9 +247,8 @@ function validNick() {
 
 window.onload = async function () {
 
-    var payAndPlayBtn = document.getElementById('payAndPlayBtn'),
+    var playBtn = document.getElementById('playBtn'),
         btnS = document.getElementById('spectateButton'),
-        connectWalletBtn = document.getElementById('connectWalletBtn'),
         nickErrorText = document.querySelector('#playerSection .input-error');
     
     // Initialize animated background
@@ -336,24 +261,15 @@ window.onload = async function () {
     try {
         const response = await fetch('/api/config');
         const config = await response.json();
-        solanaWallet.setWalletAddresses(config.treasuryWallet, config.devWallet, config.entryFee, config.platformFeePercentage);
         
         // Update UI with dynamic values from server
-        document.getElementById('entryFeeDisplay').textContent = config.entryFee + ' SOL';
-        document.getElementById('entryFeeInstructions').textContent = config.entryFee + ' SOL';
         if (config.winnerMassThreshold) {
             document.getElementById('winnerMassThreshold').textContent = config.winnerMassThreshold;
         }
     } catch (error) {
         console.error('Failed to fetch game configuration:', error);
-        showError('Failed to load game configuration. Please refresh the page.');
-        return;
     }
 
-    // Initialize prize pool display
-    updatePrizePool();
-    // Update prize pool every 30 seconds
-    setInterval(updatePrizePool, 30000);
     
     // Initialize player count display
     updatePlayerCount();
@@ -366,31 +282,12 @@ window.onload = async function () {
     // Initialize skins
     initializeSkins();
 
-    // Check if mobile and disable pay button
-    if (global.mobile) {
-        checkSufficientBalance(0); // This will disable the button and show mobile message
-    }
+    // Check if mobile and disable play button
+    checkIfMobile();
 
-    // Connect wallet button
-    connectWalletBtn.onclick = async function () {
-        showLoading(true);
-        try {
-            const result = await solanaWallet.connect();
-            if (result.success) {
-                const balance = await solanaWallet.getBalance();
-                updateWalletUI(true, result.publicKey, balance);
-            } else {
-                showError(result.error || 'Failed to connect wallet');
-            }
-        } catch (error) {
-            showError('Failed to connect wallet: ' + error.message);
-        } finally {
-            showLoading(false);
-        }
-    };
 
-    // Pay and play button
-    payAndPlayBtn.onclick = async function () {
+    // Play button
+    playBtn.onclick = async function () {
         // Check if user is on mobile
         if (global.mobile) {
             showError('The game should be played on computer, soon available on mobile');
@@ -412,13 +309,8 @@ window.onload = async function () {
         }
         nickErrorText.style.opacity = 0;
 
-        // Check wallet connection
-        if (!solanaWallet.isConnected) {
-            showError('Please connect your wallet first');
-            return;
-        }
 
-        // Check if game is full BEFORE checking balance
+        // Check if game is full
         try {
             const statusResponse = await fetch('/api/game-status');
             const gameStatus = await statusResponse.json();
@@ -433,36 +325,8 @@ window.onload = async function () {
             return;
         }
 
-        // Check balance
-        const balance = await solanaWallet.getBalance();
-        if (balance < solanaWallet.ENTRY_FEE) {
-            showError('Insufficient balance. You need at least ' + solanaWallet.ENTRY_FEE + ' SOL');
-            return;
-        }
-
-        // Process payment
-        showLoading(true);
-        try {
-            const paymentResult = await solanaWallet.processEntryFee();
-            if (paymentResult.success) {
-                // Store payment info globally
-                global.paymentInfo = {
-                    transactionId: paymentResult.transactionId,
-                    walletAddress: solanaWallet.publicKey.toString()
-                };
-                
-                // Start the game - payment will be verified during connection
-                showLoading(false);
-                startGame('player');
-                updatePrizePool(); // Update prize pool after payment
-            } else {
-                showLoading(false);
-                showError('Payment failed: ' + paymentResult.error);
-            }
-        } catch (error) {
-            showLoading(false);
-            showError('Payment error: ' + error.message);
-        }
+        // Start the game immediately
+        startGame('player');
     };
 
     // Spectate button
@@ -485,7 +349,7 @@ window.onload = async function () {
         var key = e.which || e.keyCode;
 
         if (key === global.KEY_ENTER) {
-            payAndPlayBtn.click();
+            playBtn.click();
         }
     });
     
@@ -597,36 +461,6 @@ function setupSocket(socket) {
     // Store welcome data for later use
     let welcomeData = null;
     
-    // Handle payment verification
-    socket.on('paymentVerified', function(data) {
-        if (!data.success) {
-            showLoading(false);
-            showError('Payment verification failed: ' + data.error);
-            socket.close();
-        } else {
-            // Payment verified successfully, now send gotit if we have welcome data
-            if (welcomeData) {
-                socket.emit('gotit', player);
-                global.gameStart = true;
-                window.chat.addSystemLine('Connected to the game!');
-                window.chat.addSystemLine('Type <b>-help</b> for a list of commands.');
-                if (global.mobile) {
-                    document.getElementById('gameAreaWrapper').removeChild(document.getElementById('chatbox'));
-                }
-                c.focus();
-                
-                // Start background heartbeat to prevent timeout when tab is inactive
-                if (!global.heartbeatInterval) {
-                    global.heartbeatInterval = setInterval(function() {
-                        if (socket && socket.connected && global.gameStart) {
-                            socket.emit('0', window.canvas.target || { x: player.x, y: player.y });
-                        }
-                    }, 20000); // Send heartbeat every 20 seconds
-                }
-                welcomeData = null; // Clear the stored data
-            }
-        }
-    });
 
     // Handle connection.
     socket.on('welcome', function (playerSettings, gameSizes) {
@@ -642,36 +476,23 @@ function setupSocket(socket) {
         global.game.height = gameSizes.height;
         resize();
         
-        // Store welcome data
-        welcomeData = { playerSettings, gameSizes };
+        // Send gotit immediately for all players
+        socket.emit('gotit', player);
+        global.gameStart = true;
+        window.chat.addSystemLine('Connected to the game!');
+        window.chat.addSystemLine('Type <b>-help</b> for a list of commands.');
+        if (global.mobile) {
+            document.getElementById('gameAreaWrapper').removeChild(document.getElementById('chatbox'));
+        }
+        c.focus();
         
-        // For players, verify payment first
-        if (global.paymentInfo && global.playerType === 'player') {
-            socket.emit('verifyPayment', {
-                transactionId: global.paymentInfo.transactionId,
-                playerName: global.playerName,
-                walletAddress: global.paymentInfo.walletAddress,
-                skin: global.playerSkin || 'none'
-            });
-        } else {
-            // For spectators or if no payment info, send gotit immediately
-            socket.emit('gotit', player);
-            global.gameStart = true;
-            window.chat.addSystemLine('Connected to the game!');
-            window.chat.addSystemLine('Type <b>-help</b> for a list of commands.');
-            if (global.mobile) {
-                document.getElementById('gameAreaWrapper').removeChild(document.getElementById('chatbox'));
-            }
-            c.focus();
-            
-            // Start background heartbeat for spectators too
-            if (!global.heartbeatInterval) {
-                global.heartbeatInterval = setInterval(function() {
-                    if (socket && socket.connected && global.gameStart) {
-                        socket.emit('0', window.canvas.target || { x: player.x, y: player.y });
-                    }
-                }, 20000); // Send heartbeat every 20 seconds
-            }
+        // Start background heartbeat to prevent timeout when tab is inactive
+        if (!global.heartbeatInterval) {
+            global.heartbeatInterval = setInterval(function() {
+                if (socket && socket.connected && global.gameStart) {
+                    socket.emit('0', window.canvas.target || { x: player.x, y: player.y });
+                }
+            }, 20000); // Send heartbeat every 20 seconds
         }
     });
 
@@ -758,7 +579,6 @@ function setupSocket(socket) {
             document.getElementById('gameAreaWrapper').style.opacity = 0;
             document.getElementById('startMenuWrapper').style.display = 'flex';
             document.getElementById('startMenuWrapper').style.maxHeight = '100vh';
-            document.getElementById('gamePrizePool').style.display = 'none';
             document.getElementById('screenshotNotice').style.display = 'none';
             document.body.classList.remove('game-active');
             if (global.animLoopHandle) {
@@ -788,56 +608,9 @@ function setupSocket(socket) {
         // Show winner overlay
         document.getElementById('winnerOverlay').style.display = 'flex';
         document.getElementById('winnerName').textContent = data.winner;
-        document.getElementById('winnerPrize').textContent = data.prizeAmount.toFixed(2) + ' SOL';
         
-        // Show shortened wallet address but store full address for copying
-        const shortWallet = data.walletAddress.substring(0, 6) + '...' + data.walletAddress.substring(data.walletAddress.length - 4);
-        const walletElement = document.getElementById('winnerWallet');
-        walletElement.textContent = shortWallet;
-        walletElement.dataset.fullAddress = data.walletAddress;
-        
-        // Setup copy button
-        const copyBtn = document.getElementById('copyWalletBtn');
-        copyBtn.onclick = function() {
-            navigator.clipboard.writeText(data.walletAddress).then(function() {
-                copyBtn.textContent = '✅';
-                copyBtn.classList.add('copied');
-                setTimeout(function() {
-                    copyBtn.textContent = '📋';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
-            });
-        };
-        
-        // Show transaction ID if available
-        const txLink = document.getElementById('transactionId');
-        if (data.transactionId && data.transactionId !== 'pending') {
-            document.getElementById('transactionInfo').style.display = 'block';
-            txLink.href = `https://solscan.io/tx/${data.transactionId}`;
-            txLink.textContent = 'View on Solscan';
-            txLink.style.color = '#FFD700';
-            // Enable refresh button only after transaction is complete
-            document.getElementById('refreshGameBtn').disabled = false;
-        } else {
-            // Disable refresh button until transaction completes
-            document.getElementById('refreshGameBtn').disabled = true;
-            document.getElementById('refreshGameBtn').style.opacity = '0.5';
-            document.getElementById('refreshGameBtn').style.cursor = 'not-allowed';
-            
-            // Show pending message
-            if (data.payoutError) {
-                document.getElementById('transactionInfo').style.display = 'block';
-                txLink.href = '#';
-                txLink.textContent = 'Payout failed: ' + data.payoutError;
-                txLink.style.color = '#FF5555';
-                document.getElementById('refreshGameBtn').disabled = false;
-            } else {
-                document.getElementById('transactionInfo').style.display = 'block';
-                txLink.href = '#';
-                txLink.textContent = 'Processing payout...';
-                txLink.style.color = '#FFD700';
-            }
-        }
+        // Enable refresh button immediately
+        document.getElementById('refreshGameBtn').disabled = false;
     });
     
     // Game reset event

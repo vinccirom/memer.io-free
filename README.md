@@ -1,130 +1,136 @@
-Memer.io
-=============
+# Memer.io FREE
 
-This project was originally created by @huytd. I have since taken ownership of the repository to revive the project.
+A free-to-play multiplayer Agar.io clone built with Socket.IO and HTML5 Canvas. Compete with other players in real-time to grow your cell and dominate the arena!
 
-[![GitHub Stars](https://img.shields.io/github/stars/huytd/memer.io.svg)](https://github.com/huytd/memer.io/stargazers)
-[![GitHub Issues](https://img.shields.io/github/issues/huytd/memer.io.svg)](https://github.com/huytd/memer.io/issues)
-[![GitHub Wiki](https://img.shields.io/badge/project-wiki-ff69b4.svg)](https://github.com/huytd/memer.io/wiki/Home)
-[![Live Demo](https://img.shields.io/badge/demo-online-green.svg)](#live-demos)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/huytd/memer.io?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+![Game Screenshot](screenshot.png)
 
-A simple but powerful Agar.IO clone built with socket.IO and HTML5 canvas on top of NodeJS.
+## 🎮 Features
 
-![Image](screenshot.png)
+- **100% Free-to-Play** - No payments, no crypto, just pure gaming fun
+- **Real-time Multiplayer** - Compete with up to 100 players simultaneously
+- **Custom Skins** - Choose from a variety of meme-themed skins
+- **Winner System** - First player to reach the mass threshold wins the round
+- **Spectator Mode** - Watch games in progress
+- **Live Chat** - Communicate with other players
+- **Mobile Responsive** - Play on desktop or mobile devices
+- **Dark/Light Theme** - Toggle between day and night modes
 
-## Live Demos
-An updated live list of demos can be found on the [Live Demos wiki page](https://github.com/owenashurst/memer.io/wiki/Live-Demos).
+## 🚀 How to Play
 
-This is the most up to date version from master. Any merged pull requests will deploy to this URL automatically.
+1. **Enter Your Name** - Choose a unique nickname
+2. **Select Your Skin** - Pick from available meme skins
+3. **Control Your Cell** - Move your mouse to navigate
+4. **Eat to Grow** - Consume food particles and smaller players
+5. **Split to Attack** - Press SPACE to split your cell
+6. **Eject Mass** - Press W to feed other players or escape
+7. **Win the Round** - Be the first to reach 3000 mass!
 
----
+## 📋 Game Rules
 
-## How to Play
-You can check out how to play on our [wiki](https://github.com/owenashurst/memer.io/wiki/How-to-Play).
+- Players start with invincibility until they eat their first food
+- Larger players move slower than smaller ones
+- You can only eat players smaller than you
+- Splitting makes you vulnerable but allows for strategic plays
+- Ejected mass can be reclaimed by any player
 
-#### Game Basics
-- Move your mouse around the screen to move your cell.
-- Eat food and other players in order to grow your character (food respawns every time a player eats it).
-- A player's **mass** is the number of food particles eaten.
-- **Objective**: Try to get as big as possible and eat other players.
+## 🛠 Installation & Setup
 
-#### Gameplay Rules
-- Players who haven't eaten yet cannot be eaten as a sort of "grace" period. This invincibility fades once they gain mass.
-- Everytime a player joins the game, **3** food particles will spawn.
-- Everytime a food particle is eaten by a player, **1** new food particle will respawn.
-- The more food you eat, the slower you move to make the game fairer for all.
+### Prerequisites
+- Node.js (v16 or higher)
+- NPM
 
----
+### Quick Start
+```bash
+# Clone the repository
+git clone https://github.com/vinccirom/memer.io-free.git
+cd memer.io-free
 
-## Latest Changes
-- Game logic is handled by the server
-- The client side is for rendering of the canvas and its items only.
-- Mobile optimisation.
-- Implementation of working viruses.
-- Display player name.
-- Now supporting chat. 
-- Type`-ping` in the chatbox to check your ping, as well as other commands!
-
----
-
-## Installation
-You can simply click one of the buttons below to easily deploy this repo to Bluemix or Heroku:
-
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
-
-Or...
-
->You can check out a more detailed setup tutorial on our [wiki](https://github.com/owenashurst/memer.io/wiki/Setup).
-
-#### Requirements
-To run / install this game, you'll need: 
-- NodeJS with NPM installed.
-- socket.IO.
-- Express.
-
-
-#### Downloading the dependencies
-After cloning the source code from Github, you need to run the following command to download all the dependencies (socket.IO, express, etc.):
-
-```
+# Install dependencies
 npm install
-```
 
-#### Running the Server
-After downloading all the dependencies, you can run the server with the following command:
+# Build the project
+npm run build
 
-```
+# Start the server
 npm start
 ```
 
-The game will then be accessible at `http://localhost:3000`. The default port is `3000`, however this can be changed in config. Further elaboration is available on our [wiki](https://github.com/owenashurst/memer.io/wiki/Setup).
+The game will be available at `http://localhost:3000`
 
-
-### Running the Server with Docker
-If you have [Docker](https://www.docker.com/) installed, after cloning the repository you can run the following commands to start the server and make it acessible at `http://localhost:3000`:
-
+### Development Mode
+```bash
+# Watch for changes and auto-reload
+npm run watch
 ```
-docker build -t memerio_memer .
-docker run -it -p 3000:3000 memerio_memer
+
+### Docker Setup
+```bash
+# Build and run with Docker
+docker build -t memer-io-free .
+docker run -it -p 3000:3000 memer-io-free
 ```
+
+## ⚙️ Configuration
+
+Edit `config.js` to customize game settings:
+
+- `maxPlayers`: Maximum number of concurrent players (default: 100)
+- `winnerMassThreshold`: Mass required to win (default: 3000)
+- `gameWidth/gameHeight`: Arena dimensions (default: 5000x5000)
+- `defaultPlayerMass`: Starting player mass (default: 10)
+- `maxFood`: Maximum food particles (default: 1000)
+
+## 🎯 Game Commands
+
+While playing, type these commands in chat:
+
+- `-ping` - Check your connection latency
+- `-players` - Show current player count
+- `-help` - Display available commands
+
+## 🏆 Scoring System
+
+- **Mass**: Your size determines your strength
+- **Eating**: Gain mass by consuming food and other players
+- **Splitting**: Temporarily reduces mass but enables strategic plays
+- **Winning**: First player to reach the mass threshold wins the round
+
+## 🔧 Technical Stack
+
+- **Backend**: Node.js, Express, Socket.IO
+- **Frontend**: HTML5 Canvas, JavaScript, CSS3
+- **Build Tools**: Gulp, Webpack, Babel
+- **Database**: SQLite3
+- **Real-time Communication**: WebSockets
+
+## 📱 Browser Support
+
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
+- Mobile browsers (iOS Safari, Chrome Mobile)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🎮 Credits
+
+This is a free-to-play version of an Agar.io clone, converted from a pay-to-earn version. The game mechanics are inspired by the original Agar.io game.
+
+## 🐛 Issues & Support
+
+If you encounter any bugs or have feature requests, please open an issue on the GitHub repository.
 
 ---
 
-## FAQ
-1. **What is this game?**
-
-  This is a clone of the game [Agar.IO](http://agar.io/). Someone said that Agar.IO is a clone of an iPad game called Osmos, but we haven't tried it yet. (Cloneception? :P)
-  
-2. **Why would you make a clone of this game?**
-
-  Well, while the original game is still online, it is closed-source, and sometimes, it suffers from massive lag. That's why we want to make an open source version of it: for educational purposes, and to let the community add the features that they want, self-host it on their own servers, have fun with friends and more.
-  
-3. **Any plans on adding an online server to compete with Agar.IO or making money out of it?**
-
-  No. This game belongs to the open-source community, and we have no plans on making money out of it nor competing with anything. But you can of course create your own public server, let us know if you do so and we can add it to our Live Demos list!
-  
-4. **Can I deploy this game to my own server?**
-
-  Sure you can! That's what it's made for! ;)
-  
-5. **I don't like HTML5 canvas. Can I write my own game client with this server?**
-
-  Of course! As long as your client supports WebSockets, you can write your game client in any language/technology, even with Unity3D if you want (there is an open source library for Unity to communicate with WebSockets)!
-  
-6. **Can I use some code of this project on my own?**
-
-  Yes you can.
-
-## For Developers
- - [Game Architecture](https://github.com/owenashurst/memer.io/wiki/Game-Architecture) to understand how the backend works.
- - If you want to start your own project, I recommend you use [this template](https://github.com/huytd/node-online-game-template). Happy developing!
- -
-
-## TODOs
- We have an explicit [TODO](https://github.com/owenashurst/memer.io/wiki/Coming-Features) list for the all the features we aim to develop in the future. Feel free to contribute, we'll be more than grateful.
-
-## License
->You can check out the full license [here](https://github.com/owenashurst/memer.io/blob/master/LICENSE).
-
-This project is licensed under the terms of the **MIT** license.
+**Have fun and may the biggest cell win!** 🏆
