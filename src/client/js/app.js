@@ -10,6 +10,8 @@ var socket;
 // Skin system
 var selectedSkin = null;
 var skinCache = new Map();
+var tokenSkinCache = new Map(); // Cache for custom token skins
+var currentTokenSkin = null; // Currently loaded token skin
 var availableSkins = [
     { id: 'none', name: 'No Skin', path: null },
     { id: 'michi', name: '$michi', path: 'img/skins/$michi.webp' },
@@ -191,6 +193,11 @@ function selectSkin(skinId) {
 
 // Load a skin image for a player
 function loadSkinImage(skinId) {
+    // Check if it's a token skin
+    if (skinId && skinId.startsWith('token_')) {
+        return loadTokenSkinImage(skinId);
+    }
+    
     // Check cache first
     if (skinCache.has(skinId)) {
         return skinCache.get(skinId);
@@ -212,10 +219,113 @@ function loadSkinImage(skinId) {
     return img;
 }
 
+// Load a token skin image
+function loadTokenSkinImage(skinId) {
+    // Check cache first
+    if (tokenSkinCache.has(skinId)) {
+        return tokenSkinCache.get(skinId);
+    }
+    
+    // Request the skin from server if we don't have it
+    if (!tokenSkinCache.has(skinId) && socket && socket.connected) {
+        socket.emit('requestTokenSkins', [skinId]);
+    }
+    
+    return null; // Will be loaded asynchronously
+}
+
+// Load token skin from server
+async function loadTokenSkin(tokenAddress) {
+    const loadingStatus = document.getElementById('tokenLoadingStatus');
+    const loadTokenBtn = document.getElementById('loadTokenSkinBtn');
+    
+    // Show loading status
+    loadingStatus.textContent = 'Loading token...';
+    loadingStatus.className = 'token-loading-status loading';
+    loadTokenBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/token-skin/${tokenAddress}`);
+        const tokenData = await response.json();
+        
+        if (response.ok) {
+            // Create and cache the image
+            const img = new Image();
+            img.src = tokenData.image;
+            
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+            
+            // Store in cache
+            tokenSkinCache.set(tokenData.id, img);
+            
+            // Store the token data
+            currentTokenSkin = tokenData;
+            
+            // Add to skin grid
+            addTokenSkinToGrid(tokenData);
+            
+            // Show success
+            loadingStatus.textContent = `Loaded ${tokenData.symbol}!`;
+            loadingStatus.className = 'token-loading-status success';
+            
+            // Auto-select the new token skin
+            selectSkin(tokenData.id);
+        } else {
+            throw new Error(tokenData.error || 'Failed to load token');
+        }
+    } catch (error) {
+        console.error('Error loading token skin:', error);
+        loadingStatus.textContent = 'Error: ' + error.message;
+        loadingStatus.className = 'token-loading-status error';
+    } finally {
+        loadTokenBtn.disabled = false;
+    }
+}
+
+// Add token skin to the skin grid
+function addTokenSkinToGrid(tokenData) {
+    const skinGrid = document.getElementById('skinGrid');
+    
+    // Remove any existing token skin
+    const existingTokenSkin = skinGrid.querySelector('[data-skin-id^="token_"]');
+    if (existingTokenSkin) {
+        existingTokenSkin.remove();
+    }
+    
+    // Create new skin item
+    const skinItem = document.createElement('div');
+    skinItem.className = 'skin-item';
+    skinItem.dataset.skinId = tokenData.id;
+    skinItem.style.border = '2px solid #FFD700'; // Gold border for token skins
+    
+    const img = document.createElement('img');
+    img.src = tokenData.image;
+    img.alt = tokenData.name;
+    img.title = `${tokenData.name} (${tokenData.symbol})`;
+    
+    skinItem.appendChild(img);
+    
+    // Add click handler
+    skinItem.addEventListener('click', function() {
+        selectSkin(tokenData.id);
+    });
+    
+    // Add to beginning of grid
+    skinGrid.insertBefore(skinItem, skinGrid.firstChild);
+}
+
 async function startGame(type) {
     global.playerName = playerNameInput.value.replace(/(<([^>]+)>)/ig, '').substring(0, 25);
     global.playerType = type;
     global.playerSkin = selectedSkin || 'none';
+    
+    // Include token skin data if using a token skin
+    if (global.playerSkin.startsWith('token_') && currentTokenSkin) {
+        global.tokenSkinData = currentTokenSkin;
+    }
 
     global.screen.width = window.innerWidth;
     global.screen.height = window.innerHeight;
@@ -281,6 +391,26 @@ window.onload = async function () {
     
     // Initialize skins
     initializeSkins();
+    
+    // Load token skin button
+    var loadTokenBtn = document.getElementById('loadTokenSkinBtn');
+    var tokenAddressInput = document.getElementById('tokenAddressInput');
+    
+    loadTokenBtn.onclick = function() {
+        const tokenAddress = tokenAddressInput.value.trim();
+        if (tokenAddress) {
+            loadTokenSkin(tokenAddress);
+        } else {
+            document.getElementById('tokenLoadingStatus').textContent = 'Please enter a token address';
+            document.getElementById('tokenLoadingStatus').className = 'token-loading-status error';
+        }
+    };
+    
+    tokenAddressInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadTokenBtn.click();
+        }
+    });
 
     // Check if mobile and disable play button
     checkIfMobile();
@@ -458,6 +588,20 @@ function setupSocket(socket) {
     socket.on('connect_error', handleDisconnect);
     socket.on('disconnect', handleDisconnect);
 
+    // Handle receiving token skins from server
+    socket.on('tokenSkins', function(tokenSkins) {
+        Object.entries(tokenSkins).forEach(([skinId, skinData]) => {
+            if (!tokenSkinCache.has(skinId)) {
+                const img = new Image();
+                img.src = skinData.image;
+                img.onload = function() {
+                    tokenSkinCache.set(skinId, img);
+                    console.log('Loaded token skin:', skinData.symbol);
+                };
+            }
+        });
+    });
+
     // Store welcome data for later use
     let welcomeData = null;
     
@@ -470,6 +614,12 @@ function setupSocket(socket) {
         player.screenHeight = global.screen.height;
         player.target = window.canvas.target;
         player.skin = global.playerSkin || 'none';
+        
+        // Add token skin data if applicable
+        if (global.tokenSkinData) {
+            player.tokenSkinData = global.tokenSkinData;
+        }
+        
         global.player = player;
         window.chat.player = player;
         global.game.width = gameSizes.width;
@@ -680,9 +830,17 @@ function gameLoop() {
         }
 
         var cellsToDraw = [];
+        var tokenSkinsNeeded = new Set();
+        
         for (var i = 0; i < users.length; i++) {
             let color = 'hsl(' + users[i].hue + ', 100%, 50%)';
             let borderColor = 'hsl(' + users[i].hue + ', 100%, 45%)';
+            
+            // Check if this user has a token skin we haven't loaded
+            if (users[i].skin && users[i].skin.startsWith('token_') && !tokenSkinCache.has(users[i].skin)) {
+                tokenSkinsNeeded.add(users[i].skin);
+            }
+            
             for (var j = 0; j < users[i].cells.length; j++) {
                 cellsToDraw.push({
                     color: color,
@@ -695,6 +853,11 @@ function gameLoop() {
                     skin: users[i].skin || 'none'
                 });
             }
+        }
+        
+        // Request any token skins we need
+        if (tokenSkinsNeeded.size > 0 && socket && socket.connected) {
+            socket.emit('requestTokenSkins', Array.from(tokenSkinsNeeded));
         }
         cellsToDraw.sort(function (obj1, obj2) {
             return obj1.mass - obj2.mass;
@@ -983,7 +1146,7 @@ function initializeBackground() {
         } else {
             ctx.fillStyle = 'rgba(255, 215, 0, 0.05)';
         }
-        ctx.fillText('SOLANA EDITION', centerX, centerY + 20);
+        ctx.fillText('FREE EDITION', centerX, centerY + 20);
         
         requestAnimationFrame(animate);
     }

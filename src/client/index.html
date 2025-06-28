@@ -75,6 +75,16 @@
                     <div id="skinGrid" class="skin-grid">
                         <!-- Skins will be loaded here dynamically -->
                     </div>
+                    
+                    <!-- Custom Token Skin -->
+                    <div class="custom-token-skin">
+                        <h4 class="custom-skin-title">USE TOKEN AS SKIN</h4>
+                        <input type="text" id="tokenAddressInput" class="token-address-input" placeholder="Enter Solana token address" maxlength="44" />
+                        <button id="loadTokenSkinBtn" class="retro-button token-skin-button">
+                            <span class="button-text">LOAD MEME IMAGE</span>
+                        </button>
+                        <div id="tokenLoadingStatus" class="token-loading-status"></div>
+                    </div>
                 </div>
 
                 <button id="playBtn" class="retro-button play-button">

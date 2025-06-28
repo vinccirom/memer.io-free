@@ -16,6 +16,7 @@ const config = require('../../config');
 const util = require('./lib/util');
 const mapUtils = require('./map/map');
 const {getPosition} = require("./lib/entityUtils");
+const {getTokenSkin} = require('./lib/token-skins');
 
 let map = new mapUtils.Map(config);
 
@@ -23,6 +24,7 @@ let sockets = {};
 let spectators = [];
 let gameWon = false; // Track if game has been won
 let winnerHistory = []; // Store history of winners
+let customTokenSkins = {}; // Store custom token skins for active players
 const INIT_MASS_LOG = util.mathLog(config.defaultPlayerMass, config.slowBase);
 
 let leaderboard = [];
@@ -60,6 +62,24 @@ app.get('/api/game-status', (req, res) => {
         maxPlayers: config.maxPlayers,
         spotsAvailable: Math.max(0, config.maxPlayers - currentPlayerCount)
     });
+});
+
+// API endpoint to fetch token skin
+app.get('/api/token-skin/:address', async (req, res) => {
+    const tokenAddress = req.params.address;
+    
+    // Basic validation for Solana address
+    if (!tokenAddress || tokenAddress.length < 32 || tokenAddress.length > 44) {
+        return res.status(400).json({ error: 'Invalid token address' });
+    }
+    
+    try {
+        const tokenSkin = await getTokenSkin(tokenAddress);
+        res.json(tokenSkin);
+    } catch (error) {
+        console.error('[API] Error fetching token skin:', error);
+        res.status(500).json({ error: 'Failed to fetch token skin' });
+    }
 });
 
 
@@ -115,6 +135,16 @@ io.on('connection', function (socket) {
     let type = socket.handshake.query.type;
     console.log('User has connected: ', type);
     
+    // Handle request for custom token skins
+    socket.on('requestTokenSkins', function(skinIds) {
+        const requestedSkins = {};
+        skinIds.forEach(skinId => {
+            if (customTokenSkins[skinId]) {
+                requestedSkins[skinId] = customTokenSkins[skinId];
+            }
+        });
+        socket.emit('tokenSkins', requestedSkins);
+    });
     
     switch (type) {
         case 'player':
@@ -161,6 +191,16 @@ const addPlayer = (socket) => {
             clientPlayerData.name = sanitizedName;
 
             currentPlayer.clientProvidedData(clientPlayerData);
+            
+            // Handle custom token skin
+            if (clientPlayerData.skin && clientPlayerData.skin.startsWith('token_')) {
+                const tokenData = clientPlayerData.tokenSkinData;
+                if (tokenData) {
+                    customTokenSkins[clientPlayerData.skin] = tokenData;
+                    console.log('[INFO] Player ' + currentPlayer.name + ' using custom token skin: ' + tokenData.symbol);
+                }
+            }
+            
             map.players.pushNew(currentPlayer);
             io.emit('playerJoin', { name: currentPlayer.name });
             console.log('Total players: ' + map.players.data.length);
@@ -191,6 +231,18 @@ const addPlayer = (socket) => {
         console.log('[INFO] User ' + currentPlayer.name + ' has disconnected');
         socket.broadcast.emit('playerDisconnect', { name: currentPlayer.name });
         
+        // Clean up custom token skin if player had one
+        if (currentPlayer.skin && currentPlayer.skin.startsWith('token_')) {
+            // Check if any other players are using the same token skin
+            const otherUsersWithSameSkin = map.players.data.some(p => 
+                p.id !== currentPlayer.id && p.skin === currentPlayer.skin
+            );
+            
+            if (!otherUsersWithSameSkin) {
+                delete customTokenSkins[currentPlayer.skin];
+                console.log('[INFO] Removed unused token skin: ' + currentPlayer.skin);
+            }
+        }
     });
 
     socket.on('playerChat', (data) => {
